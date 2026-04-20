@@ -1,5 +1,6 @@
 // index.ts — SnapMe: Farcaster Snap 2.0 (correct spec)
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import {
   createConfession, canSubmitToday, getConfession, recordView, castVote,
   hasVoted, recordTip, getTrending, getMostSupported, getMostControversial,
@@ -26,13 +27,20 @@ function getBase(req: Request): string {
 }
 
 function isSnap(req: Request) {
-  return (req.headers.get("Accept") ?? "").includes(SNAP_CT);
+  const accept = req.headers.get("Accept") ?? "";
+  return accept.includes(SNAP_CT);
 }
 
 function snapRes(data: unknown) {
   return new Response(JSON.stringify(data), {
     status: 200,
-    headers: { "Content-Type": SNAP_CT, Vary: "Accept" },
+    headers: { 
+      "Content-Type": SNAP_CT, 
+      "Vary": "Accept",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization, X-Requested-With",
+    },
   });
 }
 
@@ -64,6 +72,26 @@ async function postCast(text: string): Promise<string | null> {
 
 // ─── App ───────────────────────────────────────────────────────────────────
 const app = new Hono();
+
+// Global CORS Middleware
+app.use("*", cors({
+  origin: "*",
+  allowMethods: ["GET", "POST", "OPTIONS"],
+  allowHeaders: ["Content-Type", "Accept", "Authorization", "X-Requested-With"],
+  exposeHeaders: ["Content-Type", "Vary", "Link"],
+  maxAge: 600,
+}));
+
+// Global Link Header Middleware for HTML responses
+app.use("*", async (c, next) => {
+  await next();
+  const contentType = c.res.headers.get("Content-Type");
+  if (contentType && contentType.includes("text/html")) {
+    const base = getBase(c.req.raw);
+    // Point to the root or the specific resource as a snap
+    c.header("Link", `<${base}/>; rel="alternate"; type="${SNAP_CT}"`, { append: true });
+  }
+});
 
 // ─── Home ──────────────────────────────────────────────────────────────────
 app.get("/", async (c) => {
