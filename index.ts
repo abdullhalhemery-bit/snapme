@@ -141,7 +141,6 @@ app.get("/feed", async (c) => {
   return snapRes(buildSnap("page", els));
 });
 
-
 // ─── Submit GET ─────────────────────────────────────────────────────────────
 app.get("/submit", async (c) => {
   if (!isSnap(c.req.raw)) return c.html(htmlFallback());
@@ -457,7 +456,6 @@ function htmlFallback(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="alternate" type="application/vnd.farcaster.snap+json" href="https://snapmx-4ruw32fay-obobhemyariis-projects.vercel.app/" />
   <title>SnapMe — Anonymous Confessions on Farcaster</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -476,9 +474,18 @@ function htmlFallback(): string {
   <div class="card">
     <span class="icon">🤫</span>
     <h1>SnapMe</h1>
-    <p>Anonymous confessions on Farcaster.</p>
+    <p>Anonymous confessions on Farcaster. Vote Real or Fake. Tip your favorites. Earn from the weekly reward pool.</p>
+    <div class="grid">
+      <div class="feat"><strong>🔐 100% Anonymous</strong><span>Your identity is never revealed</span></div>
+      <div class="feat"><strong>🗳 Real or Fake?</strong><span>Community votes each confession</span></div>
+      <div class="feat"><strong>💰 Tip & Earn</strong><span>Support great confessions</span></div>
+      <div class="feat"><strong>🏆 Weekly Rewards</strong><span>Top confessions earn from pool</span></div>
+    </div>
+    <p style="font-size:0.875rem">Open this URL in a Farcaster client to use the Snap.</p>
+    <span class="pill">Open in Farcaster</span>
   </div>
 </body>
 </html>`;
 }
+
 export default app;
