@@ -1,4 +1,4 @@
-// db.ts — In-memory store (replace with Turso/SQLite for production)
+// db.ts — In-memory store
 import { v4 as uuidv4 } from "uuid";
 
 export interface Confession {
@@ -12,7 +12,7 @@ export interface Confession {
   total_tips_amount: number;
   tip_count: number;
   status: "open" | "closed";
-  submission_fid: number; // PRIVATE - never exposed
+  submission_fid: number;
   claim_token: string;
 }
 
@@ -30,37 +30,22 @@ export interface Tip {
   timestamp: number;
 }
 
-export interface ViewRecord {
-  confession_id: string;
-  viewer_fid: number;
-}
-
-export interface DailySubmission {
-  fid: number;
-  date: string; // YYYY-MM-DD
-  count: number;
-}
-
-// ---------- In-memory stores ----------
 const confessions = new Map<string, Confession>();
-const votes = new Map<string, Vote>(); // key: `${confession_id}:${voter_fid}`
+const votes = new Map<string, Vote>();
 const tips: Tip[] = [];
-const views = new Set<string>(); // key: `${confession_id}:${viewer_fid}`
-const dailySubmissions = new Map<string, number>(); // key: `${fid}:${date}`
+const views = new Set<string>();
+const dailySubmissions = new Map<string, number>();
 
-// ---------- Tokenomics ----------
 export const WEEKLY_POOL_SHARE = 0.7;
 export const APP_REVENUE_SHARE = 0.2;
 export const JACKPOT_SHARE = 0.1;
 
-// ---------- Helpers ----------
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
 export function getEngagementScore(c: Confession): number {
-  const totalVotes = c.real_votes + c.fake_votes;
-  return totalVotes + c.total_tips_amount * 10;
+  return c.real_votes + c.fake_votes + c.total_tips_amount * 10;
 }
 
 export function getVerdictBadge(c: Confession): string {
@@ -88,7 +73,7 @@ export function getControversyScore(c: Confession): number {
   const total = c.real_votes + c.fake_votes;
   if (total === 0) return 0;
   const realPct = (c.real_votes / total) * 100;
-  return 100 - Math.abs(realPct - 50) * 2; // closer to 50/50 = more controversial
+  return 100 - Math.abs(realPct - 50) * 2;
 }
 
 export function getCountdown(c: Confession): string {
@@ -99,8 +84,6 @@ export function getCountdown(c: Confession): string {
   const m = Math.floor((remaining % 3600000) / 60000);
   return `${h}h ${m}m left`;
 }
-
-// ---------- DB Operations ----------
 
 export function createConfession(fid: number, text: string): Confession {
   const id = uuidv4();
@@ -118,7 +101,6 @@ export function createConfession(fid: number, text: string): Confession {
     claim_token: uuidv4().replace(/-/g, ""),
   };
   confessions.set(id, confession);
-  // Increment daily count
   const key = `${fid}:${todayStr()}`;
   dailySubmissions.set(key, (dailySubmissions.get(key) ?? 0) + 1);
   return confession;
@@ -134,7 +116,6 @@ export function getConfession(id: string): Confession | null {
 }
 
 export function getAllConfessions(): Confession[] {
-  // Auto-close confessions older than 24h
   for (const [, c] of confessions) {
     if (c.status === "open" && Date.now() - c.timestamp > 24 * 60 * 60 * 1000) {
       c.status = "closed";
@@ -172,8 +153,7 @@ export function castVote(
 }
 
 export function hasVoted(confessionId: string, voterFid: number): "real" | "fake" | null {
-  const v = votes.get(`${confessionId}:${voterFid}`);
-  return v?.vote_type ?? null;
+  return votes.get(`${confessionId}:${voterFid}`)?.vote_type ?? null;
 }
 
 export function recordTip(confessionId: string, tipperFid: number, amount: number): boolean {
@@ -183,6 +163,18 @@ export function recordTip(confessionId: string, tipperFid: number, amount: numbe
   c.total_tips_amount += amount;
   c.tip_count++;
   return true;
+}
+
+export function findByClaimToken(token: string): Confession | null {
+  for (const c of confessions.values()) {
+    if (c.claim_token === token) return c;
+  }
+  return null;
+}
+
+export function updateCastHash(confessionId: string, hash: string): void {
+  const c = confessions.get(confessionId);
+  if (c) c.cast_hash = hash;
 }
 
 export function getTrending(): Confession[] {
@@ -200,8 +192,10 @@ export function getMostControversial(): Confession[] {
     .slice(0, 10);
 }
 
-// Seed some demo confessions
+let seeded = false;
 export function seedDemoData() {
+  if (seeded) return;
+  seeded = true;
   const demos = [
     { text: "I ghosted my best friend for 6 months and blamed it on anxiety but really I was just jealous of their success.", fid: 99991 },
     { text: "I've been pretending to work from home for 3 months. I actually quit and have been living off savings while job hunting.", fid: 99992 },
@@ -211,7 +205,6 @@ export function seedDemoData() {
   ];
   for (const d of demos) {
     const c = createConfession(d.fid, d.text);
-    // Give them some votes/tips
     for (let i = 1; i <= 45; i++) castVote(c.confession_id, i, i % 3 === 0 ? "fake" : "real");
     recordTip(c.confession_id, 1001, 2.5);
     recordTip(c.confession_id, 1002, 1.0);

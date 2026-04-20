@@ -1,102 +1,45 @@
-// ui.ts — SnapMe UI helpers for Farcaster Snap JSON
+// ui.ts — Snap UI builders following Farcaster Snap 2.0 spec
 
-export type TextOptions = {
-  weight?: "bold" | "normal";
-  size?: "sm" | "md" | "lg";
-  align?: "left" | "center" | "right";
-};
+export type SnapTheme = "purple" | "green" | "red" | "blue" | "orange";
 
-export type ButtonVariant = "primary" | "ghost" | "default";
+export type Elements = Record<string, unknown>;
 
-export type ButtonOptions = {
-  variant?: ButtonVariant;
-};
+// ─── Primitive builders ────────────────────────────────────────────────────
 
-// ─── text ──────────────────────────────────────────────────────────────────
-export function text(content: string, opts: TextOptions = {}): object {
-  return {
-    type: "text",
-    props: {
-      content,
-      weight: opts.weight ?? "normal",
-      size: opts.size ?? "md",
-      align: opts.align ?? "left",
-    },
-  };
+export function txt(content: string, opts: { weight?: "bold"; size?: "sm" | "lg"; align?: "center" } = {}) {
+  return { type: "text", props: { content, ...opts } };
 }
 
-// ─── button ────────────────────────────────────────────────────────────────
-export function button(
-  label: string,
-  action: string,
-  target: string,
-  opts: ButtonOptions = {}
-): object {
+export function btn(label: string, target: string, variant?: "primary" | "ghost") {
   return {
     type: "button",
-    props: {
-      label,
-      action,
-      target,
-      variant: opts.variant ?? "default",
-    },
+    props: { label, ...(variant ? { variant } : {}) },
+    on: { press: { action: "submit", params: { target } } },
   };
 }
 
-// ─── stack ─────────────────────────────────────────────────────────────────
-export function stack(
-  children: string[],
-  direction: "vertical" | "horizontal" = "vertical"
-): object {
-  return {
-    type: "stack",
-    props: {
-      direction,
-      children,
-    },
-  };
+export function vstack(...children: string[]) {
+  return { type: "stack", props: {}, children };
 }
 
-// ─── progress ──────────────────────────────────────────────────────────────
-export function progress(value: number, max: number, label: string): object {
-  return {
-    type: "progress",
-    props: {
-      value,
-      max,
-      label,
-    },
-  };
+export function hstack(...children: string[]) {
+  return { type: "stack", props: { direction: "horizontal" }, children };
 }
 
-// ─── input ─────────────────────────────────────────────────────────────────
-export function input(
-  name: string,
-  label: string,
-  placeholder: string,
-  maxLength: number = 280
-): object {
-  return {
-    type: "input",
-    props: {
-      name,
-      label,
-      placeholder,
-      maxLength,
-    },
-  };
+export function bar(value: number, max: number, label: string) {
+  return { type: "progress", props: { value, max, label } };
+}
+
+export function inp(name: string, label: string, placeholder: string, maxLength = 280) {
+  return { type: "input", props: { name, label, placeholder, maxLength } };
 }
 
 // ─── buildSnap ─────────────────────────────────────────────────────────────
-export function buildSnap(
-  elements: Record<string, object>,
-  root: string,
-  theme: "purple" | "green" | "red" | "blue" = "purple"
-): object {
+
+export function buildSnap(root: string, elements: Elements, accent: SnapTheme = "purple") {
   return {
-    type: "snap",
-    theme,
-    root,
-    elements,
+    version: "2.0",
+    theme: { accent },
+    ui: { root, elements },
   };
 }
