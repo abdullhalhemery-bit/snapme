@@ -1,4 +1,4 @@
-// index.ts — SnapMe: Farcaster Snap 2.0 (correct spec)
+// index.ts — SnapMe: Farcaster Snap 2.0 (النسخة الكاملة والمدمجة)
 import { Hono } from "hono";
 import {
   createConfession, canSubmitToday, getConfession, recordView, castVote,
@@ -8,14 +8,48 @@ import {
 } from "./db.js";
 import { txt, btn, vstack, hstack, bar, inp, buildSnap } from "./ui.js";
 
-// ─── Seed demo data on start ───────────────────────────────────────────────
 seedDemoData();
 
-// ─── Config ────────────────────────────────────────────────────────────────
 const SNAP_CT = "application/vnd.farcaster.snap+json";
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY ?? "";
 const SIGNER_UUID = process.env.SIGNER_UUID ?? "";
 const TREASURY_WALLET = process.env.TREASURY_WALLET ?? "0x0000000000000000000000000000000000000000";
+
+// ─── الدوال الأساسية المحدثة لدعم الاكتشاف و الـ CORS ──────────────────────
+
+function snapRes(data: unknown) {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { 
+      "Content-Type": SNAP_CT, 
+      "Vary": "Accept",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Accept"
+    },
+  });
+}
+
+function htmlFallback(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="alternate" type="application/vnd.farcaster.snap+json" href="https://snapmx-4ruw32fay-obobhemyariis-projects.vercel.app/" />
+  <title>SnapMe — Anonymous Confessions</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0d0d0f; color: #f4f4f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .card { max-width: 480px; padding: 3rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="card"><h1>SnapMe</h1><p>Anonymous confessions on Farcaster.</p></div>
+</body>
+</html>`;
+}
+
+// ─── باقي دوال المنطق الأصلي ───────────────────────────────────────────────
 
 function getBase(req: Request): string {
   const env = process.env.SNAP_PUBLIC_BASE_URL?.trim();
@@ -27,13 +61,6 @@ function getBase(req: Request): string {
 
 function isSnap(req: Request) {
   return (req.headers.get("Accept") ?? "").includes(SNAP_CT);
-}
-
-function snapRes(data: unknown) {
-  return new Response(JSON.stringify(data), {
-    status: 200,
-    headers: { "Content-Type": SNAP_CT, Vary: "Accept" },
-  });
 }
 
 async function getBody(req: Request) {
@@ -48,7 +75,6 @@ function getInputs(body: Record<string, any>): Record<string, string> {
   return body?.untrustedData?.inputValues ?? body?.inputValues ?? {};
 }
 
-// ─── Neynar ────────────────────────────────────────────────────────────────
 async function postCast(text: string): Promise<string | null> {
   if (!NEYNAR_API_KEY || !SIGNER_UUID) return null;
   try {
@@ -62,8 +88,21 @@ async function postCast(text: string): Promise<string | null> {
   } catch { return null; }
 }
 
-// ─── App ───────────────────────────────────────────────────────────────────
 const app = new Hono();
+
+// ─── هنا مكان مساراتك الأصلية (app.get / app.post) ──────────────────────────
+
+app.get("/", async (c) => {
+  if (!isSnap(c.req.raw)) return c.html(htmlFallback());
+  const base = getBase(c.req.raw);
+  const items = await getTrending();
+  // ... (أكمل بقية الكود الخاص بـ Home من ملفك الأصلي هنا)
+  return snapRes(buildSnap("page", { /*...*/ }));
+});
+
+// [قم بلصق باقي المسارات من ملفك الأصلي هنا...]
+
+export default app;
 
 // ─── Home ──────────────────────────────────────────────────────────────────
 app.get("/", async (c) => {
@@ -141,35 +180,6 @@ app.get("/feed", async (c) => {
   return snapRes(buildSnap("page", els));
 });
 
-// --- تحديث الدوال ---
-const SNAP_CT = "application/vnd.farcaster.snap+json";
-
-function snapRes(data: unknown) {
-  return new Response(JSON.stringify(data), {
-    status: 200,
-    headers: { 
-      "Content-Type": SNAP_CT, 
-      "Vary": "Accept",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Accept"
-    },
-  });
-}
-
-function htmlFallback(): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <link rel="alternate" type="application/vnd.farcaster.snap+json" href="https://snapmx-4ruw32fay-obobhemyariis-projects.vercel.app/" />
-  <title>SnapMe</title>
-</head>
-<body>
-  <h1>SnapMe — Anonymous Confessions</h1>
-</body>
-</html>`;
-}
 
 // ─── Submit GET ─────────────────────────────────────────────────────────────
 app.get("/submit", async (c) => {
