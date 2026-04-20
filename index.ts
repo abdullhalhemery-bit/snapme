@@ -129,7 +129,7 @@ app.get("/", async (c) => {
     actions: hstack("vote-btn", "tip-btn", "more-btn"),
     "vote-btn": btn("Vote", `${base}/vote?id=${top.confession_id}`, "primary"),
     "tip-btn": btn("💰 Tip", `${base}/tip?id=${top.confession_id}`),
-    "more-btn": btn("More →", `${base}/feed`, "ghost"),
+    "more-btn": btn("More →", `${base}/feed`, "secondary"),
   }));
 });
 
@@ -149,9 +149,9 @@ app.get("/feed", async (c) => {
     page: vstack("brand", "tabs", ...top.flatMap((_, i) => [`c${i}`, `s${i}`, `b${i}`]), "submit-btn"),
     brand: txt(`🤫 SnapMe  ·  ${tabLabel}`, { weight: "bold" }),
     tabs: hstack("t1", "t2", "t3"),
-    t1: btn("🔥", `${base}/feed?tab=trending`, tab === "trending" ? "primary" : "ghost"),
-    t2: btn("💰", `${base}/feed?tab=supported`, tab === "supported" ? "primary" : "ghost"),
-    t3: btn("🧢", `${base}/feed?tab=controversial`, tab === "controversial" ? "primary" : "ghost"),
+    t1: btn("🔥", `${base}/feed?tab=trending`, tab === "trending" ? "primary" : "secondary"),
+    t2: btn("💰", `${base}/feed?tab=supported`, tab === "supported" ? "primary" : "secondary"),
+    t3: btn("🧢", `${base}/feed?tab=controversial`, tab === "controversial" ? "primary" : "secondary"),
     "submit-btn": btn("➕ Confess", `${base}/submit`, "primary"),
   };
 
@@ -162,7 +162,7 @@ app.get("/feed", async (c) => {
     top.forEach((conf, i) => {
       els[`c${i}`] = txt(`${i + 1}. "${conf.text.slice(0, 80)}${conf.text.length > 80 ? "…" : ""}"`, { size: "sm", weight: i === 0 ? "bold" : undefined });
       els[`s${i}`] = txt(`${getVerdictBadge(conf)}  ✅ ${getRealPct(conf)}%  👁 ${conf.views_count}  💰 $${Number(conf.total_tips_amount).toFixed(2)}`, { size: "sm" });
-      els[`b${i}`] = btn("Open →", `${base}/confession?id=${conf.confession_id}`, "ghost");
+      els[`b${i}`] = btn("Open →", `${base}/confession?id=${conf.confession_id}`, "secondary");
     });
   }
 
@@ -180,7 +180,7 @@ app.get("/submit", async (c) => {
     "conf-input": inp("confession", "Your confession", "I secretly…", 280),
     rules: txt("Max 3 per day · No hate speech · Genuine only", { size: "sm" }),
     "submit-btn": btn("Submit Anonymously", `${base}/submit`, "primary"),
-    "cancel-btn": btn("Cancel", `${base}/feed`, "ghost"),
+    "cancel-btn": btn("Cancel", `${base}/feed`, "secondary"),
   }));
 });
 
@@ -195,7 +195,7 @@ app.post("/submit", async (c) => {
   const errSnap = (msg: string) => snapRes(buildSnap("page", {
     page: vstack("err", "back"),
     err: txt(msg, { weight: "bold" }),
-    back: btn("← Back", `${base}/submit`, "ghost"),
+    back: btn("← Back", `${base}/submit`, "secondary"),
   }, "red"));
 
   if (!fid) return errSnap("❌ Could not verify your identity.");
@@ -205,7 +205,7 @@ app.post("/submit", async (c) => {
     page: vstack("err", "sub", "back"),
     err: txt("🚫 Daily Limit Reached", { weight: "bold" }),
     sub: txt("Max 3 confessions per day.", { size: "sm" }),
-    back: btn("← Feed", `${base}/feed`, "ghost"),
+    back: btn("← Feed", `${base}/feed`, "secondary"),
   }, "red"));
 
   let confession;
@@ -221,7 +221,7 @@ app.post("/submit", async (c) => {
     sub: txt(`Save your claim token:\n🔑 ${confession.claim_token}`, { size: "sm" }),
     note: txt("⚠️ Shown once only. Screenshot to claim rewards.", { size: "sm" }),
     "view-btn": btn("View Confession", `${base}/confession?id=${confession.confession_id}`, "primary"),
-    "feed-btn": btn("← Feed", `${base}/feed`, "ghost"),
+    "feed-btn": btn("← Feed", `${base}/feed`, "secondary"),
   }, "green"));
 });
 
@@ -236,7 +236,7 @@ app.get("/confession", async (c) => {
   if (!conf) return snapRes(buildSnap("page", {
     page: vstack("err", "back"),
     err: txt("❌ Confession not found.", { weight: "bold" }),
-    back: btn("← Feed", `${base}/feed`, "ghost"),
+    back: btn("← Feed", `${base}/feed`, "secondary"),
   }, "red"));
 
   if (viewerFid) recordView(id, viewerFid);
@@ -264,7 +264,7 @@ app.get("/confession", async (c) => {
     "fake-btn": btn("❌ Fake", `${base}/vote?id=${id}&type=fake`),
     closed: txt("🔒 Voting closed", { size: "sm" }),
     "tip-btn": btn("💰 Tip", `${base}/tip?id=${id}`),
-    back: btn("← Feed", `${base}/feed`, "ghost"),
+    back: btn("← Feed", `${base}/feed`, "secondary"),
   }));
 });
 
@@ -279,7 +279,7 @@ app.get("/vote", async (c) => {
   if (!conf) return snapRes(buildSnap("page", {
     page: vstack("err", "back"),
     err: txt("❌ Confession not found.", { weight: "bold" }),
-    back: btn("← Feed", `${base}/feed`, "ghost"),
+    back: btn("← Feed", `${base}/feed`, "secondary"),
   }, "red"));
 
   return snapRes(buildSnap("page", {
@@ -290,7 +290,7 @@ app.get("/vote", async (c) => {
     "vote-row": hstack("real-btn", "fake-btn"),
     "real-btn": btn("✅ Real", `${base}/vote?id=${id}&type=real`, "primary"),
     "fake-btn": btn("❌ Fake", `${base}/vote?id=${id}&type=fake`),
-    back: btn("← Cancel", `${base}/confession?id=${id}`, "ghost"),
+    back: btn("← Cancel", `${base}/confession?id=${id}`, "secondary"),
   }));
 });
 
@@ -307,7 +307,7 @@ app.post("/vote", async (c) => {
   if (!fid || !conf || !type) return snapRes(buildSnap("page", {
     page: vstack("err", "back"),
     err: txt("❌ Invalid request.", { weight: "bold" }),
-    back: btn("← Feed", `${base}/feed`, "ghost"),
+    back: btn("← Feed", `${base}/feed`, "secondary"),
   }, "red"));
 
   const result = castVote(id, fid, type);
@@ -320,14 +320,14 @@ app.post("/vote", async (c) => {
       msg: txt(`Your vote: ${prev === "real" ? "✅ Real" : "❌ Fake"}`, { size: "sm" }),
       rb: bar(getRealPct(conf), 100, `✅ ${getRealPct(conf)}%`),
       fb: bar(getFakePct(conf), 100, `❌ ${getFakePct(conf)}%`),
-      back: btn("← Back", `${base}/confession?id=${id}`, "ghost"),
+      back: btn("← Back", `${base}/confession?id=${id}`, "secondary"),
     }));
   }
 
   if (result === "closed") return snapRes(buildSnap("page", {
     page: vstack("err", "back"),
     err: txt("🔒 Voting is closed (24h elapsed).", { weight: "bold" }),
-    back: btn("← Back", `${base}/confession?id=${id}`, "ghost"),
+    back: btn("← Back", `${base}/confession?id=${id}`, "secondary"),
   }, "red"));
 
   const updated = getConfession(id)!;
@@ -342,7 +342,7 @@ app.post("/vote", async (c) => {
     verdict: txt(getVerdictBadge(updated), { weight: "bold", align: "center" }),
     actions: hstack("tip-btn", "back"),
     "tip-btn": btn("💰 Tip this", `${base}/tip?id=${id}`, "primary"),
-    back: btn("← Feed", `${base}/feed`, "ghost"),
+    back: btn("← Feed", `${base}/feed`, "secondary"),
   }, "green"));
 });
 
@@ -356,7 +356,7 @@ app.get("/tip", async (c) => {
   if (!conf) return snapRes(buildSnap("page", {
     page: vstack("err", "back"),
     err: txt("❌ Confession not found.", { weight: "bold" }),
-    back: btn("← Feed", `${base}/feed`, "ghost"),
+    back: btn("← Feed", `${base}/feed`, "secondary"),
   }, "red"));
 
   return snapRes(buildSnap("page", {
@@ -367,7 +367,7 @@ app.get("/tip", async (c) => {
     "amount-input": inp("amount", "Amount (USDC)", "e.g. 1.00", 8),
     "pool-info": txt(`${Math.round(WEEKLY_POOL_SHARE * 100)}% Rewards · ${Math.round(APP_REVENUE_SHARE * 100)}% App · ${Math.round(JACKPOT_SHARE * 100)}% Jackpot`, { size: "sm" }),
     "confirm-btn": btn("Send Tip (USDC)", `${base}/tip?id=${id}`, "primary"),
-    back: btn("← Cancel", `${base}/confession?id=${id}`, "ghost"),
+    back: btn("← Cancel", `${base}/confession?id=${id}`, "secondary"),
   }));
 });
 
@@ -385,7 +385,7 @@ app.post("/tip", async (c) => {
   if (!fid || amount <= 0 || !conf) return snapRes(buildSnap("page", {
     page: vstack("err", "back"),
     err: txt("❌ Invalid tip request.", { weight: "bold" }),
-    back: btn("← Back", `${base}/tip?id=${id}`, "ghost"),
+    back: btn("← Back", `${base}/tip?id=${id}`, "secondary"),
   }, "red"));
 
   recordTip(id, fid, amount);
@@ -397,7 +397,7 @@ app.post("/tip", async (c) => {
     "amount-sent": txt(`$${amount.toFixed(2)} USDC tip registered.`),
     "split-info": txt(`🏆 $${(amount * WEEKLY_POOL_SHARE).toFixed(2)} Rewards · 💼 $${(amount * APP_REVENUE_SHARE).toFixed(2)} App · 🎰 $${(amount * JACKPOT_SHARE).toFixed(2)} Jackpot`, { size: "sm" }),
     total: txt(`Total tips: $${newTotal.toFixed(2)} (${conf.tip_count + 1} tips)`, { size: "sm" }),
-    back: btn("← Confession", `${base}/confession?id=${id}`, "ghost"),
+    back: btn("← Confession", `${base}/confession?id=${id}`, "secondary"),
   }, "green"));
 });
 
@@ -418,11 +418,11 @@ app.get("/leaderboard", async (c) => {
     page: vstack("title", "tabs", ...top.flatMap((_, i) => [`e${i}`, `s${i}`, `ob${i}`]), "confess-btn", "back"),
     title: txt(`🤫 SnapMe  ·  ${title}`, { weight: "bold" }),
     tabs: hstack("t1", "t2", "t3"),
-    t1: btn("🔥", `${base}/leaderboard?tab=trending`, tab === "trending" ? "primary" : "ghost"),
-    t2: btn("💰", `${base}/leaderboard?tab=supported`, tab === "supported" ? "primary" : "ghost"),
-    t3: btn("🧢", `${base}/leaderboard?tab=controversial`, tab === "controversial" ? "primary" : "ghost"),
+    t1: btn("🔥", `${base}/leaderboard?tab=trending`, tab === "trending" ? "primary" : "secondary"),
+    t2: btn("💰", `${base}/leaderboard?tab=supported`, tab === "supported" ? "primary" : "secondary"),
+    t3: btn("🧢", `${base}/leaderboard?tab=controversial`, tab === "controversial" ? "primary" : "secondary"),
     "confess-btn": btn("➕ Confess", `${base}/submit`, "primary"),
-    back: btn("← Feed", `${base}/feed`, "ghost"),
+    back: btn("← Feed", `${base}/feed`, "secondary"),
   };
 
   if (top.length === 0) {
@@ -432,7 +432,7 @@ app.get("/leaderboard", async (c) => {
     top.forEach((conf, i) => {
       els[`e${i}`] = txt(`${medals[i]} "${conf.text.slice(0, 70)}${conf.text.length > 70 ? "…" : ""}"`, { size: "sm", weight: i === 0 ? "bold" : undefined });
       els[`s${i}`] = txt(`${getVerdictBadge(conf)}  ✅ ${getRealPct(conf)}%  👁 ${conf.views_count}  💰 $${Number(conf.total_tips_amount).toFixed(2)}`, { size: "sm" });
-      els[`ob${i}`] = btn("Open", `${base}/confession?id=${conf.confession_id}`, "ghost");
+      els[`ob${i}`] = btn("Open", `${base}/confession?id=${conf.confession_id}`, "secondary");
     });
   }
 
@@ -449,7 +449,7 @@ app.get("/claim", async (c) => {
     sub: txt("Enter your claim token from when you submitted.", { size: "sm" }),
     "token-input": inp("token", "Claim Token", "Paste token here…", 64),
     "claim-btn": btn("Check Reward", `${base}/claim`, "primary"),
-    back: btn("← Feed", `${base}/feed`, "ghost"),
+    back: btn("← Feed", `${base}/feed`, "secondary"),
   }));
 });
 
@@ -463,7 +463,7 @@ app.post("/claim", async (c) => {
   if (!match) return snapRes(buildSnap("page", {
     page: vstack("err", "back"),
     err: txt("❌ Token not found. Copy it exactly as shown.", { weight: "bold" }),
-    back: btn("← Try again", `${base}/claim`, "ghost"),
+    back: btn("← Try again", `${base}/claim`, "secondary"),
   }, "red"));
 
   return snapRes(buildSnap("page", {
@@ -473,7 +473,7 @@ app.post("/claim", async (c) => {
     stats: txt(`👁 ${match.views_count} · 💬 ${match.real_votes + match.fake_votes} votes · 💰 $${Number(match.total_tips_amount).toFixed(2)}`, { size: "sm" }),
     verdict: txt(getVerdictBadge(match), { weight: "bold", align: "center" }),
     note: txt("Rewards batched weekly. Paid to your connected wallet. Fully anonymous.", { size: "sm" }),
-    back: btn("← Feed", `${base}/feed`, "ghost"),
+    back: btn("← Feed", `${base}/feed`, "secondary"),
   }, "green"));
 });
 

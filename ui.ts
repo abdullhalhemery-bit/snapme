@@ -10,16 +10,16 @@ export function txt(content: string, opts: { weight?: "bold"; size?: "sm" | "lg"
   return { type: "text", props: { content, ...opts } };
 }
 
-export function btn(label: string, target: string, variant?: "primary" | "ghost") {
+export function btn(label: string, target: string, variant?: "primary" | "secondary") {
   return {
     type: "button",
-    props: { label, ...(variant ? { variant } : {}) },
+    props: { label, variant: variant || "secondary" },
     on: { press: { action: "submit", params: { target } } },
   };
 }
 
 export function vstack(...children: string[]) {
-  return { type: "stack", props: {}, children };
+  return { type: "stack", props: { direction: "vertical" }, children };
 }
 
 export function hstack(...children: string[]) {
