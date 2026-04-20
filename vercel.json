@@ -1,13 +1,13 @@
 {
   "version": 2,
-  "builds": [{ "src": "src/index.ts", "use": "@vercel/node" }],
-  "routes": [{ "src": "/(.*)", "dest": "src/index.ts" }],
-  "env": {
-    "NEYNAR_API_KEY": "@neynar_api_key",
-    "SIGNER_UUID": "@signer_uuid",
-    "TREASURY_WALLET": "@treasury_wallet",
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_SERVICE_KEY": "@supabase_service_key",
-    "SNAP_PUBLIC_BASE_URL": "@snap_public_base_url"
-  }
+  "builds": [
+    {
+      "src": "index.ts",
+      "use": "@vercel/node",
+      "config": { "includeFiles": ["**"] }
+    }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "index.ts" }
+  ]
 }
